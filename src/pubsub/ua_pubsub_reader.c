@@ -331,8 +331,7 @@ UA_DataSetReader_generateNetworkMessage(UA_PubSubConnection *pubSubConnection, U
 static UA_StatusCode
 checkReaderIdentifier(UA_Server *server, UA_NetworkMessage *msg,
                       UA_DataSetReader *reader) {
-    if(!msg->groupHeaderEnabled || !msg->groupHeader.writerGroupIdEnabled ||
-       !msg->payloadHeaderEnabled) {
+    if(!msg->groupHeaderEnabled || !msg->groupHeader.writerGroupIdEnabled){// || !msg->payloadHeaderEnabled) {
         UA_LOG_INFO(&server->config.logger, UA_LOGCATEGORY_SERVER,
                     "Cannot process DataSetReader without WriterGroup"
                     "and DataSetWriter identifiers");
@@ -375,11 +374,19 @@ checkReaderIdentifier(UA_Server *server, UA_NetworkMessage *msg,
         return UA_STATUSCODE_BADNOTFOUND;
     }
 
-    if(reader->config.writerGroupId == msg->groupHeader.writerGroupId &&
-       reader->config.dataSetWriterId == *msg->payloadHeader.dataSetPayloadHeader.dataSetWriterIds) {
-        UA_LOG_DEBUG(&server->config.logger, UA_LOGCATEGORY_SERVER,
-                     "DataSetReader found. Process NetworkMessage");
-        return UA_STATUSCODE_GOOD;
+    if(reader->config.writerGroupId == msg->groupHeader.writerGroupId) {
+        if(msg->payloadHeaderEnabled &&
+           reader->config.dataSetWriterId ==
+               *msg->payloadHeader.dataSetPayloadHeader.dataSetWriterIds) {
+            UA_LOG_DEBUG(&server->config.logger, UA_LOGCATEGORY_SERVER,
+                         "DataSetReader found. Process NetworkMessage");
+            return UA_STATUSCODE_GOOD;
+        } else if(!msg->payloadHeaderEnabled) {
+            UA_LOG_DEBUG(&server->config.logger, UA_LOGCATEGORY_SERVER,
+                         "DataSetReader found. But no Payload Definition!!!");
+            return UA_STATUSCODE_GOOD;
+           }
+        
     }
 
     return UA_STATUSCODE_BADNOTFOUND;
