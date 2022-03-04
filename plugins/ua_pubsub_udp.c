@@ -191,7 +191,7 @@ UA_PubSubChannelUDPMC_open(const UA_PubSubConnectionConfig *connectionConfig) {
     }
 
     channelDataUDPMC->ai_family = rp->ai_family;
-    channelDataUDPMC->ai_addrlen = rp->ai_addrlen;
+    channelDataUDPMC->ai_addrlen = (socklen_t) rp->ai_addrlen;
     memcpy(&channelDataUDPMC->ai_addr, rp->ai_addr, rp->ai_addrlen);
     newChannel->handle = channelDataUDPMC; /* Link channel and internal channel data */
 
@@ -580,8 +580,9 @@ UA_PubSubChannelUDPMC_receive(UA_PubSubChannel *channel,
             UA_fd_set(channel->sockfd, &fdset);
             /* Select API will return the remaining time in the struct
              * timeval */
-            int resultsize = UA_select(channel->sockfd+1, &fdset, NULL,
-                                       NULL, &timeoutValue);
+            //int resultsize = UA_select(channel->sockfd+1, &fdset, NULL,NULL, &timeoutValue);
+            int resultsize =
+                UA_select(channel->sockfd, &fdset, NULL, NULL, &timeoutValue);
             if(resultsize == 0) {
                 retval = UA_STATUSCODE_GOODNONCRITICALTIMEOUT;
                 if(rcvCount > 0)
